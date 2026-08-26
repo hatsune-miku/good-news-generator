@@ -1,7 +1,9 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react-swc'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react-swc";
 
-// https://vitejs.dev/config/
-export default defineConfig({
+// GitHub Pages publishes this project under /good-news-generator/.
+// Keep the development server at / so local development remains unchanged.
+export default defineConfig(({ command }) => ({
+  base: command === "build" ? "/good-news-generator/" : "/",
   plugins: [react()],
-})
+}));
