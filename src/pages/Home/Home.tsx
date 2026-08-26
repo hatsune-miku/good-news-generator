@@ -9,6 +9,7 @@ import {
   ToggleButtonGroup,
   ToggleButton,
   MenuItem,
+  Slider,
   alpha,
   Divider,
   Paper,
@@ -28,36 +29,43 @@ import { showTemporaryToastText } from "../../store/reducers/toast";
 import GitHubIcon from "@mui/icons-material/GitHub";
 
 const fontFamilyDefault = `"Roboto","Helvetica","Arial",sans-serif`;
-const fontFamilySongTi = `"NSimSun","FangSong",sans`;
-const fontFamilyHeiti = `"Source Han Sans CN","Microsoft Yahei","Arial",sans-serif`;
-const fontFamilyKaiti = `"STKaiti","KaiTi",sans`;
+const fontFamilySongTi = `"NSimSun","SimSun","FangSong",serif`;
+const fontFamilyHeiti = `"Source Han Sans CN","Microsoft YaHei","Arial",sans-serif`;
+const fontFamilyKaiti = `"STKaiti","KaiTi",serif`;
+const fontFamilyLiShu = `"LiSu","STLiti","隶书",serif`;
 
 interface Fonts {
   default: string;
   songTi: string;
   heiTi: string;
   kaiTi: string;
+  liShu: string;
 }
+
+type FontStyleType = "normal" | "italic";
 
 const fonts: Fonts = {
   default: fontFamilyDefault,
   songTi: fontFamilySongTi,
   heiTi: fontFamilyHeiti,
   kaiTi: fontFamilyKaiti,
+  liShu: fontFamilyLiShu,
 };
 
 const Home = () => {
   const [contentText, setContentText] = useState("");
-
   const [newsType, setNewsType] = useState("good-news-type");
-
   const imageElementRef = useRef<HTMLDivElement | null>(null);
 
   const getCurrentImageCanvas = async () => {
     const current = imageElementRef.current;
     if (current === null) return null;
 
-    const canvas = await html2canvas(current);
+    const canvas = await html2canvas(current, {
+      backgroundColor: null,
+      useCORS: true,
+      scale: window.devicePixelRatio || 1,
+    });
     return canvas;
   };
 
@@ -102,19 +110,53 @@ const Home = () => {
   const textSizeRem = `${textSizePx / 10}rem`;
   const textColor = newsType === "good-news-type" ? "#dc3023" : "#5a5a5a";
 
-  const [textAlignType, setTextAignType] = useState("center");
+  const [textAlignType, setTextAlignType] = useState<
+    "left" | "center" | "right" | "justify"
+  >("center");
   const [fontFamily, setFontFamily] = useState<keyof Fonts>("default");
+  const [fontStyle, setFontStyle] = useState<FontStyleType>("normal");
+
+  const handleTextSizeChange = (value: number) => {
+    setTextSizePt(Math.min(96, Math.max(8, value)));
+  };
 
   const handleReset = () => {
     setNewsType("good-news-type");
-    setTextAignType("center");
+    setTextAlignType("center");
     setFontFamily("default");
+    setFontStyle("normal");
     setContentText("");
     setTextSizePt(24);
   };
 
   const theme = useTheme();
   const breakpointDownSm = useMediaQuery(theme.breakpoints.down("md"));
+
+  const getLinePositionSx = () => {
+    if (textAlignType === "center") {
+      return {
+        position: "relative" as const,
+        left: "50%",
+        transform: "translateX(-50%)",
+        width: "max-content",
+        maxWidth: "none",
+      };
+    }
+
+    if (textAlignType === "right") {
+      return {
+        marginLeft: "auto",
+        width: "max-content",
+        maxWidth: "none",
+      };
+    }
+
+    return {
+      marginRight: "auto",
+      width: "max-content",
+      maxWidth: "none",
+    };
+  };
 
   const buttonGroup = (
     <Stack
@@ -186,7 +228,7 @@ const Home = () => {
               >
                 <img
                   src={newsType === "good-news-type" ? goodNewsUrl : badNewsUrl}
-                  alt="good news"
+                  alt={newsType === "good-news-type" ? "good news" : "bad news"}
                 />
                 <Stack
                   sx={{
@@ -198,13 +240,17 @@ const Home = () => {
                     "& .MuiTypography-root": {
                       color: textColor,
                       fontSize: textSizeRem,
-                      fontWeight: 600,
-                      textAlign: textAlignType,
+                      fontWeight: 400,
+                      fontStyle,
+                      lineHeight: 0.75,
+                      textAlign: textAlignType === "justify" ? "left" : textAlignType,
                       fontFamily: fonts[fontFamily],
+                      whiteSpace: "nowrap",
+                      overflow: "visible",
                       "&.empty-line::after": {
                         content: `''`,
                         display: "inline-block",
-                        width: "100%",
+                        width: "1px",
                       },
                     },
                   }}
@@ -213,32 +259,41 @@ const Home = () => {
                     paddingTop={"8.4rem"}
                     paddingBottom={"4.8em"}
                     paddingX={"6.4rem"}
-                    sx={{ width: "100%", height: "100%" }}
+                    sx={{
+                      width: "100%",
+                      height: "100%",
+                      overflow: "visible",
+                    }}
                     justifyContent={"center"}
                   >
-                    {contentText.split("\n").map((line) => (
-                      <>
+                    {contentText.split("\n").map((line, lineIndex) => (
+                      <React.Fragment key={`${lineIndex}-${line}`}>
                         {line !== "" ? (
-                          <>
-                            {textAlignType !== "justify" ? (
-                              <Typography>{line}</Typography>
-                            ) : (
-                              <Typography
-                                sx={{
-                                  display: "flex",
-                                  justifyContent: "space-between",
-                                }}
-                              >
-                                {line.split("").map((char, index) => (
-                                  <span key={index}>{char}</span>
-                                ))}
-                              </Typography>
-                            )}
-                          </>
+                          textAlignType !== "justify" ? (
+                            <Typography sx={getLinePositionSx()}>{line}</Typography>
+                          ) : (
+                            <Typography
+                              sx={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                width: "100%",
+                                maxWidth: "none",
+                              }}
+                            >
+                              {line.split("").map((char, index) => (
+                                <span key={index}>{char}</span>
+                              ))}
+                            </Typography>
+                          )
                         ) : (
-                          <Typography className="empty-line"> </Typography>
+                          <Typography
+                            className="empty-line"
+                            sx={{ minHeight: "0.75em" }}
+                          >
+                            {" "}
+                          </Typography>
                         )}
-                      </>
+                      </React.Fragment>
                     ))}
                   </Stack>
                 </Stack>
@@ -276,7 +331,9 @@ const Home = () => {
                       exclusive
                       size="small"
                       value={newsType}
-                      onChange={(_, newNewsType) => setNewsType(newNewsType)}
+                      onChange={(_, newNewsType) => {
+                        if (newNewsType) setNewsType(newNewsType);
+                      }}
                     >
                       <ToggleButton
                         value="good-news-type"
@@ -298,9 +355,9 @@ const Home = () => {
                       value={textAlignType}
                       exclusive
                       size="small"
-                      onChange={(_, newTextAlignType) =>
-                        setTextAignType(newTextAlignType)
-                      }
+                      onChange={(_, newTextAlignType) => {
+                        if (newTextAlignType) setTextAlignType(newTextAlignType);
+                      }}
                     >
                       <ToggleButton value="left" aria-label="left aligned">
                         <FormatAlignLeftIcon />
@@ -316,20 +373,34 @@ const Home = () => {
                       </ToggleButton>
                     </ToggleButtonGroup>
                   </SideItemBlock>
+
                   <SideItemBlock label="字号 (pt)">
-                    <TextField
-                      value={textSizePt}
-                      type="number"
-                      fullWidth
-                      size="small"
-                      onChange={(e) => {
-                        const newValue = parseFloat(e.target.value);
-                        if (!isNaN(newValue) && newValue > 0) {
-                          setTextSizePt(newValue);
+                    <Stack direction="row" spacing="1.6rem" alignItems="center">
+                      <Slider
+                        min={8}
+                        max={96}
+                        step={0.5}
+                        value={textSizePt}
+                        valueLabelDisplay="auto"
+                        onChange={(_, value) =>
+                          handleTextSizeChange(value as number)
                         }
-                      }}
-                    />
+                        sx={{ flex: 1 }}
+                      />
+                      <TextField
+                        value={textSizePt}
+                        type="number"
+                        size="small"
+                        inputProps={{ min: 8, max: 96, step: 0.5 }}
+                        onChange={(e) => {
+                          const newValue = parseFloat(e.target.value);
+                          if (!isNaN(newValue)) handleTextSizeChange(newValue);
+                        }}
+                        sx={{ width: "9.6rem" }}
+                      />
+                    </Stack>
                   </SideItemBlock>
+
                   <SideItemBlock label="字体">
                     <TextField
                       value={fontFamily}
@@ -344,7 +415,28 @@ const Home = () => {
                       <MenuItem value="songTi">宋体</MenuItem>
                       <MenuItem value="heiTi">黑体</MenuItem>
                       <MenuItem value="kaiTi">楷体</MenuItem>
+                      <MenuItem value="liShu">隶书</MenuItem>
                     </TextField>
+                  </SideItemBlock>
+
+                  <SideItemBlock label="字体风格">
+                    <ToggleButtonGroup
+                      value={fontStyle}
+                      exclusive
+                      size="small"
+                      onChange={(_, newFontStyle) => {
+                        if (newFontStyle) {
+                          setFontStyle(newFontStyle as FontStyleType);
+                        }
+                      }}
+                    >
+                      <ToggleButton value="normal" aria-label="normal font style">
+                        常规
+                      </ToggleButton>
+                      <ToggleButton value="italic" aria-label="italic font style">
+                        斜体
+                      </ToggleButton>
+                    </ToggleButtonGroup>
                   </SideItemBlock>
                 </Stack>
               </Stack>
