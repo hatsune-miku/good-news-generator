@@ -118,7 +118,7 @@ const Home = () => {
   const [fontStyle, setFontStyle] = useState<FontStyleType>("normal");
 
   const handleTextSizeChange = (value: number) => {
-    setTextSizePt(Math.min(96, Math.max(8, value)));
+    setTextSizePt(Math.min(300, Math.max(8, value)));
   };
 
   const handleReset = () => {
@@ -379,7 +379,7 @@ const Home = () => {
                     <Stack direction="row" spacing="1.6rem" alignItems="center">
                       <Slider
                         min={8}
-                        max={96}
+                        max={300}
                         step={0.5}
                         value={textSizePt}
                         valueLabelDisplay="auto"
@@ -392,7 +392,7 @@ const Home = () => {
                         value={textSizePt}
                         type="number"
                         size="small"
-                        inputProps={{ min: 8, max: 96, step: 0.5 }}
+                        inputProps={{ min: 8, max: 300, step: 0.5 }}
                         onChange={(e) => {
                           const newValue = parseFloat(e.target.value);
                           if (!isNaN(newValue)) handleTextSizeChange(newValue);
