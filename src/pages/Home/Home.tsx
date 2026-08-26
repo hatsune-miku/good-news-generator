@@ -17,7 +17,6 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import goodNewsUrl from "../../assets/good_news.jpg";
 import badNewsUrl from "../../assets/bad_news.jpg";
 import FormatAlignLeftIcon from "@mui/icons-material/FormatAlignLeft";
 import FormatAlignCenterIcon from "@mui/icons-material/FormatAlignCenter";
@@ -27,6 +26,8 @@ import html2canvas from "html2canvas";
 import { useAppDispatch } from "../../store/hooks";
 import { showTemporaryToastText } from "../../store/reducers/toast";
 import GitHubIcon from "@mui/icons-material/GitHub";
+
+const goodNewsUrl = "https://vanillacake.cn/xibaobg.png";
 
 const fontFamilyDefault = `"Roboto","Helvetica","Arial",sans-serif`;
 const fontFamilySongTi = `"NSimSun","SimSun","FangSong",serif`;
