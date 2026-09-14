@@ -22,6 +22,10 @@ import FormatAlignLeftIcon from "@mui/icons-material/FormatAlignLeft";
 import FormatAlignCenterIcon from "@mui/icons-material/FormatAlignCenter";
 import FormatAlignRightIcon from "@mui/icons-material/FormatAlignRight";
 import FormatAlignJustifyIcon from "@mui/icons-material/FormatAlignJustify";
+import FormatBoldIcon from "@mui/icons-material/FormatBold";
+import FormatItalicIcon from "@mui/icons-material/FormatItalic";
+import FormatUnderlinedIcon from "@mui/icons-material/FormatUnderlined";
+import StrikethroughSIcon from "@mui/icons-material/StrikethroughS";
 import html2canvas from "html2canvas";
 import { useAppDispatch } from "../../store/hooks";
 import { showTemporaryToastText } from "../../store/reducers/toast";
@@ -34,6 +38,9 @@ const fontFamilySongTi = `"NSimSun","SimSun","FangSong",serif`;
 const fontFamilyHeiti = `"Source Han Sans CN","Microsoft YaHei","Arial",sans-serif`;
 const fontFamilyKaiti = `"STKaiti","KaiTi",serif`;
 const fontFamilyLiShu = `"LiSu","STLiti","隶书",serif`;
+const fontFamilyFangSong = `"STFangsong","FangSong","仿宋",serif`;
+const fontFamilyYouYuan = `"YouYuan","幼圆","Microsoft YaHei",sans-serif`;
+const fontFamilyMono = `"SFMono-Regular","Consolas","Liberation Mono",monospace`;
 
 interface Fonts {
   default: string;
@@ -41,9 +48,16 @@ interface Fonts {
   heiTi: string;
   kaiTi: string;
   liShu: string;
+  fangSong: string;
+  youYuan: string;
+  mono: string;
 }
 
 type FontStyleType = "normal" | "italic";
+type TextDecorationLineType = "underline" | "line-through" | "overline";
+type TextDecorationStyleType = "solid" | "double" | "dotted" | "dashed" | "wavy";
+type TextShadowPresetType = "none" | "soft" | "hard" | "glow";
+type TextStyleToggleType = "bold" | "italic" | TextDecorationLineType;
 
 const fonts: Fonts = {
   default: fontFamilyDefault,
@@ -51,6 +65,22 @@ const fonts: Fonts = {
   heiTi: fontFamilyHeiti,
   kaiTi: fontFamilyKaiti,
   liShu: fontFamilyLiShu,
+  fangSong: fontFamilyFangSong,
+  youYuan: fontFamilyYouYuan,
+  mono: fontFamilyMono,
+};
+
+const getTextShadow = (preset: TextShadowPresetType, color: string) => {
+  switch (preset) {
+    case "soft":
+      return "0.08em 0.1em 0.16em rgba(0, 0, 0, 0.38)";
+    case "hard":
+      return "0.08em 0.08em 0 rgba(0, 0, 0, 0.55)";
+    case "glow":
+      return `0 0 0.12em #fff, 0 0 0.3em ${color}`;
+    default:
+      return "none";
+  }
 };
 
 const Home = () => {
@@ -109,13 +139,27 @@ const Home = () => {
   const [textSizePt, setTextSizePt] = useState(24);
   const textSizePx = (textSizePt * 4) / 3;
   const textSizeRem = `${textSizePx / 10}rem`;
-  const textColor = newsType === "good-news-type" ? "#dc3023" : "#5a5a5a";
+  const defaultTextColor = newsType === "good-news-type" ? "#dc3023" : "#5a5a5a";
+  const [customTextColor, setCustomTextColor] = useState("");
+  const textColor = customTextColor || defaultTextColor;
 
   const [textAlignType, setTextAlignType] = useState<
     "left" | "center" | "right" | "justify"
   >("center");
   const [fontFamily, setFontFamily] = useState<keyof Fonts>("default");
+  const [fontWeight, setFontWeight] = useState(400);
   const [fontStyle, setFontStyle] = useState<FontStyleType>("normal");
+  const [textDecorationLines, setTextDecorationLines] = useState<
+    TextDecorationLineType[]
+  >([]);
+  const [textDecorationStyle, setTextDecorationStyle] =
+    useState<TextDecorationStyleType>("solid");
+  const [letterSpacingPx, setLetterSpacingPx] = useState(0);
+  const [lineHeight, setLineHeight] = useState(0.75);
+  const [textShadowPreset, setTextShadowPreset] =
+    useState<TextShadowPresetType>("none");
+  const [strokeWidthPx, setStrokeWidthPx] = useState(0);
+  const [strokeColor, setStrokeColor] = useState("#ffffff");
 
   const handleTextSizeChange = (value: number) => {
     setTextSizePt(Math.min(300, Math.max(8, value)));
@@ -125,9 +169,38 @@ const Home = () => {
     setNewsType("good-news-type");
     setTextAlignType("center");
     setFontFamily("default");
+    setFontWeight(400);
     setFontStyle("normal");
+    setTextDecorationLines([]);
+    setTextDecorationStyle("solid");
+    setLetterSpacingPx(0);
+    setLineHeight(0.75);
+    setTextShadowPreset("none");
+    setStrokeWidthPx(0);
+    setStrokeColor("#ffffff");
+    setCustomTextColor("");
     setContentText("");
     setTextSizePt(24);
+  };
+
+  const selectedTextStyles: TextStyleToggleType[] = [
+    ...(fontWeight >= 700 ? (["bold"] as const) : []),
+    ...(fontStyle === "italic" ? (["italic"] as const) : []),
+    ...textDecorationLines,
+  ];
+
+  const handleTextStylesChange = (styles: TextStyleToggleType[]) => {
+    const isBold = styles.includes("bold");
+    setFontWeight((current) => {
+      if (isBold) return current >= 700 ? current : 700;
+      return current >= 700 ? 400 : current;
+    });
+    setFontStyle(styles.includes("italic") ? "italic" : "normal");
+    setTextDecorationLines(
+      styles.filter((style): style is TextDecorationLineType =>
+        ["underline", "line-through", "overline"].includes(style)
+      )
+    );
   };
 
   const theme = useTheme();
@@ -241,9 +314,23 @@ const Home = () => {
                     "& .MuiTypography-root": {
                       color: textColor,
                       fontSize: textSizeRem,
-                      fontWeight: 400,
+                      fontWeight,
                       fontStyle,
-                      lineHeight: 0.75,
+                      lineHeight,
+                      letterSpacing: `${letterSpacingPx}px`,
+                      textDecorationLine:
+                        textDecorationLines.length > 0
+                          ? textDecorationLines.join(" ")
+                          : "none",
+                      textDecorationStyle,
+                      textDecorationColor: "currentColor",
+                      textDecorationThickness: "0.08em",
+                      textShadow: getTextShadow(textShadowPreset, textColor),
+                      WebkitTextStroke:
+                        strokeWidthPx > 0
+                          ? `${strokeWidthPx}px ${strokeColor}`
+                          : undefined,
+                      paintOrder: "stroke fill",
                       textAlign: textAlignType === "justify" ? "left" : textAlignType,
                       fontFamily: fonts[fontFamily],
                       whiteSpace: "nowrap",
@@ -417,27 +504,229 @@ const Home = () => {
                       <MenuItem value="heiTi">黑体</MenuItem>
                       <MenuItem value="kaiTi">楷体</MenuItem>
                       <MenuItem value="liShu">隶书</MenuItem>
+                      <MenuItem value="fangSong">仿宋</MenuItem>
+                      <MenuItem value="youYuan">幼圆</MenuItem>
+                      <MenuItem value="mono">等宽字体</MenuItem>
                     </TextField>
                   </SideItemBlock>
 
-                  <SideItemBlock label="字体风格">
+                  <SideItemBlock label="基础样式">
                     <ToggleButtonGroup
-                      value={fontStyle}
-                      exclusive
+                      value={selectedTextStyles}
                       size="small"
-                      onChange={(_, newFontStyle) => {
-                        if (newFontStyle) {
-                          setFontStyle(newFontStyle as FontStyleType);
-                        }
+                      onChange={(_, newStyles) => {
+                        handleTextStylesChange(
+                          newStyles as TextStyleToggleType[]
+                        );
                       }}
                     >
-                      <ToggleButton value="normal" aria-label="normal font style">
-                        常规
+                      <ToggleButton value="bold" aria-label="加粗">
+                        <FormatBoldIcon />
                       </ToggleButton>
-                      <ToggleButton value="italic" aria-label="italic font style">
-                        斜体
+                      <ToggleButton value="italic" aria-label="斜体">
+                        <FormatItalicIcon />
+                      </ToggleButton>
+                      <ToggleButton value="underline" aria-label="下划线">
+                        <FormatUnderlinedIcon />
+                      </ToggleButton>
+                      <ToggleButton value="line-through" aria-label="删除线">
+                        <StrikethroughSIcon />
+                      </ToggleButton>
+                      <ToggleButton value="overline" aria-label="上划线">
+                        <Typography sx={{ textDecoration: "overline" }}>
+                          A
+                        </Typography>
                       </ToggleButton>
                     </ToggleButtonGroup>
+                  </SideItemBlock>
+
+                  <SideItemBlock label="字重">
+                    <TextField
+                      value={fontWeight}
+                      select
+                      fullWidth
+                      size="small"
+                      onChange={(event) =>
+                        setFontWeight(Number(event.target.value))
+                      }
+                    >
+                      <MenuItem value={100}>100 极细</MenuItem>
+                      <MenuItem value={200}>200 纤细</MenuItem>
+                      <MenuItem value={300}>300 细体</MenuItem>
+                      <MenuItem value={400}>400 常规</MenuItem>
+                      <MenuItem value={500}>500 中等</MenuItem>
+                      <MenuItem value={600}>600 半粗</MenuItem>
+                      <MenuItem value={700}>700 粗体</MenuItem>
+                      <MenuItem value={800}>800 特粗</MenuItem>
+                      <MenuItem value={900}>900 黑体</MenuItem>
+                    </TextField>
+                  </SideItemBlock>
+
+                  <SideItemBlock label="装饰线样式">
+                    <TextField
+                      value={textDecorationStyle}
+                      select
+                      fullWidth
+                      size="small"
+                      disabled={textDecorationLines.length === 0}
+                      onChange={(event) =>
+                        setTextDecorationStyle(
+                          event.target.value as TextDecorationStyleType
+                        )
+                      }
+                    >
+                      <MenuItem value="solid">实线</MenuItem>
+                      <MenuItem value="double">双线</MenuItem>
+                      <MenuItem value="dotted">点线</MenuItem>
+                      <MenuItem value="dashed">虚线</MenuItem>
+                      <MenuItem value="wavy">波浪线</MenuItem>
+                    </TextField>
+                  </SideItemBlock>
+
+                  <SideItemBlock label="文字颜色">
+                    <Stack direction="row" spacing="1rem" alignItems="center">
+                      <TextField
+                        type="color"
+                        value={textColor}
+                        size="small"
+                        onChange={(event) =>
+                          setCustomTextColor(event.target.value)
+                        }
+                        inputProps={{ "aria-label": "文字颜色" }}
+                        sx={{ width: "7.2rem" }}
+                      />
+                      <TextField
+                        value={textColor}
+                        size="small"
+                        onChange={(event) =>
+                          setCustomTextColor(event.target.value)
+                        }
+                        inputProps={{ "aria-label": "文字颜色值" }}
+                        sx={{ flex: 1 }}
+                      />
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() => setCustomTextColor("")}
+                      >
+                        自动
+                      </Button>
+                    </Stack>
+                  </SideItemBlock>
+
+                  <SideItemBlock label="字间距 (px)">
+                    <Stack direction="row" spacing="1.6rem" alignItems="center">
+                      <Slider
+                        min={-10}
+                        max={40}
+                        step={0.5}
+                        value={letterSpacingPx}
+                        valueLabelDisplay="auto"
+                        onChange={(_, value) =>
+                          setLetterSpacingPx(value as number)
+                        }
+                        sx={{ flex: 1 }}
+                      />
+                      <TextField
+                        value={letterSpacingPx}
+                        type="number"
+                        size="small"
+                        inputProps={{ min: -10, max: 40, step: 0.5 }}
+                        onChange={(event) => {
+                          const value = Number(event.target.value);
+                          if (!Number.isNaN(value)) {
+                            setLetterSpacingPx(
+                              Math.min(40, Math.max(-10, value))
+                            );
+                          }
+                        }}
+                        sx={{ width: "9.6rem" }}
+                      />
+                    </Stack>
+                  </SideItemBlock>
+
+                  <SideItemBlock label="行高">
+                    <Stack direction="row" spacing="1.6rem" alignItems="center">
+                      <Slider
+                        min={0.5}
+                        max={3}
+                        step={0.05}
+                        value={lineHeight}
+                        valueLabelDisplay="auto"
+                        onChange={(_, value) => setLineHeight(value as number)}
+                        sx={{ flex: 1 }}
+                      />
+                      <TextField
+                        value={lineHeight}
+                        type="number"
+                        size="small"
+                        inputProps={{ min: 0.5, max: 3, step: 0.05 }}
+                        onChange={(event) => {
+                          const value = Number(event.target.value);
+                          if (!Number.isNaN(value)) {
+                            setLineHeight(Math.min(3, Math.max(0.5, value)));
+                          }
+                        }}
+                        sx={{ width: "9.6rem" }}
+                      />
+                    </Stack>
+                  </SideItemBlock>
+
+                  <SideItemBlock label="文字阴影">
+                    <TextField
+                      value={textShadowPreset}
+                      select
+                      fullWidth
+                      size="small"
+                      onChange={(event) =>
+                        setTextShadowPreset(
+                          event.target.value as TextShadowPresetType
+                        )
+                      }
+                    >
+                      <MenuItem value="none">无</MenuItem>
+                      <MenuItem value="soft">柔和阴影</MenuItem>
+                      <MenuItem value="hard">硬边阴影</MenuItem>
+                      <MenuItem value="glow">发光</MenuItem>
+                    </TextField>
+                  </SideItemBlock>
+
+                  <SideItemBlock label="文字描边">
+                    <Stack direction="row" spacing="1rem" alignItems="center">
+                      <Slider
+                        min={0}
+                        max={8}
+                        step={0.25}
+                        value={strokeWidthPx}
+                        valueLabelDisplay="auto"
+                        onChange={(_, value) =>
+                          setStrokeWidthPx(value as number)
+                        }
+                        sx={{ flex: 1 }}
+                      />
+                      <TextField
+                        value={strokeWidthPx}
+                        type="number"
+                        size="small"
+                        inputProps={{ min: 0, max: 8, step: 0.25 }}
+                        onChange={(event) => {
+                          const value = Number(event.target.value);
+                          if (!Number.isNaN(value)) {
+                            setStrokeWidthPx(Math.min(8, Math.max(0, value)));
+                          }
+                        }}
+                        sx={{ width: "8rem" }}
+                      />
+                      <TextField
+                        type="color"
+                        value={strokeColor}
+                        size="small"
+                        disabled={strokeWidthPx === 0}
+                        onChange={(event) => setStrokeColor(event.target.value)}
+                        inputProps={{ "aria-label": "描边颜色" }}
+                        sx={{ width: "7.2rem" }}
+                      />
+                    </Stack>
                   </SideItemBlock>
                 </Stack>
               </Stack>
